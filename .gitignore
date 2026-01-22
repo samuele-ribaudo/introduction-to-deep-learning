@@ -1,0 +1,6 @@
+Exams_Release_WS25/
+
+datasets/*
+!.gitkeep
+
+lecture_notes.pdf
