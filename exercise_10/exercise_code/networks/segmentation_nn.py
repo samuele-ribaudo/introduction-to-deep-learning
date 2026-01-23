@@ -1,6 +1,7 @@
 """SegmentationNN"""
 import torch
 import torch.nn as nn
+import torchvision.models as models
 
 class ConvLayer(nn.Module):
 
@@ -26,10 +27,28 @@ class SegmentationNN(nn.Module):
         ########################################################################
         #                             YOUR CODE                                #
         ########################################################################
+        resnet = models.resnet18(pretrained=True)
 
+        #ENCODER
+
+        self.layer0 = nn.Sequential(
+            resnet.conv1,
+            resnet.bn1,
+            resnet.relu,
+            resnet.maxpool
+        ) # size = 240*240*3 -> 60*60*64
+
+        self.layer1 = resnet.layer1 # size = 60*60*64 -> 60*60*64
+        self.layer2 = resnet.layer2 # size = 60*60*64 -> 30*30*128
+        self.layer3 = resnet.layer3 # size = 30*30*128 -> 15*15*256
+
+        #DECODER
+        self.up1 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2) # size = 15*15*256 -> 30*30*128
+        self.up2 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2) # size = 30*30*128 -> 60*60*64
+        self.up3 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2) # size = 60*60*64 -> 120*120*64
+        self.up4 = nn.ConvTranspose2d(64, num_classes, kernel_size=2, stride=2) # size = 120*120*64 -> 240*240*num_classes
 
         pass
-
         ########################################################################
         #                           END OF YOUR CODE                           #
         ########################################################################
@@ -46,8 +65,16 @@ class SegmentationNN(nn.Module):
         #                             YOUR CODE                                #  
         ########################################################################
 
+        # ENCODER
+        x = self.layer0(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
 
-        pass
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        x = self.up4(x)
 
         ########################################################################
         #                           END OF YOUR CODE                           #
